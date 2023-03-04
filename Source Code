@@ -1,0 +1,1042 @@
+
+#Libraries and data importing
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+%matplotlib inline 
+import seaborn as sns
+sns.set()
+from datetime import datetime, date
+import warnings
+warnings.filterwarnings('ignore')
+
+trans = pd.read_csv(r'C:\Users\Saad\Desktop\OneDrive - Universiti Sains Malaysia\Academic-Courses\Semester 2\Fawry\Fawry_Sample_Transactional_CSV.csv')
+profiles = pd.read_csv(r'C:\Users\Saad\Desktop\OneDrive - Universiti Sains Malaysia\Academic-Courses\Semester 2\Fawry\profiles.csv')
+
+#Data Exploration
+
+# Convert the CREATION_DATE and PAYMENT_DAY columns in the trans table to datetime format
+trans['CREATION_DATE'] = pd.to_datetime(trans['CREATION_DATE'], errors='coerce')
+trans['PAYMENT_DAY'] = pd.to_datetime(trans['PAYMENT_DAY'], errors='coerce')
+
+# Convert the customer_birth_date, last_modification_date, last_login_date, registeration_date, creation_date, customer_creation_date, and cust_last_modification_date columns in the profiles table to datetime format
+profiles['customer_birth_date'] = pd.to_datetime(profiles['customer_birth_date'], errors='coerce')
+profiles['last_modification_date'] = pd.to_datetime(profiles['last_modification_date'])
+profiles['last_login_date'] = pd.to_datetime(profiles['last_login_date'], errors='coerce')
+profiles['registeration_date'] = pd.to_datetime(profiles['registeration_date'])
+profiles['creation_date'] = pd.to_datetime(profiles['creation_date'])
+profiles['customer_creation_date'] = pd.to_datetime(profiles['customer_creation_date'])
+profiles['cust_last_modification_date'] = pd.to_datetime(profiles['cust_last_modification_date'])
+
+# Create a new column in the trans table that shows the difference in days between the CREATION_DATE and PAYMENT_DAY columns
+trans['days_to_payment'] = (trans['PAYMENT_DAY'] - trans['CREATION_DATE']).dt.days
+
+# Create a new column in the profiles table that shows the customer's age
+profiles['customer_age'] = (pd.Timestamp.now() - profiles['customer_birth_date']).dt.days / 365.25
+
+# Get a summary of the numerical columns in the trans and profiles tables
+trans.describe()
+profiles.describe()
+
+# Group the rows in the trans table by CUSTOMER_ID and SERVICE_CATEGORY, and compute statistics for each group
+trans_by_customer_id_and_service_category = trans.groupby(['CUSTOMER_ID', 'SERVICE_CATEGORY']).agg({'NET_AMOUNT': ['mean', 'median', 'min', 'max'], 'CUSTOMER_FEES_AMOUNT': ['mean', 'median', 'min', 'max'], 'days_to_payment': ['mean', 'median', 'min', 'max']})
+trans_by_customer_id_and_service_category
+
+# Use the sns.scatterplot() function to create scatter plots of the net amount and customer fees amount
+sns.scatterplot(x='NET_AMOUNT', y='CUSTOMER_FEES_AMOUNT', data=trans)
+
+# Use the sns.barplot() function to create bar plots of the net amount and customer fees amount, grouped by SERVICE_CATEGORY
+sns.barplot(x='SERVICE_CATEGORY', y='NET_AMOUNT', data=trans)
+sns.barplot(x='SERVICE_CATEGORY', y='CUSTOMER_FEES_AMOUNT', data=trans)
+
+# Use the sns.histplot() function to create histograms of the net amount, customer fees amount, and days_to_payment columns
+sns.histplot(trans['NET_AMOUNT'])
+sns.histplot(trans['CUSTOMER_FEES_AMOUNT'])
+sns.histplot(trans['days_to_payment'])
+
+# Use the sns.pairplot() function to create scatter plots and histograms of all the numerical columns in the profiles table
+sns.pairplot(profiles, kind='scatter')
+
+# Use the sns.catplot() function to create bar plots of the total_paid_amount, grouped by customer_gender
+sns.catplot(x='customer_gender', y='total_paid_amount', kind='bar', data=profiles)
+
+# Use the sns.jointplot() function to create scatter plots and histograms of the total_paid_amount and customer_age columns
+sns.jointplot(x='customer_age', y='total_paid_amount', kind='scatter', data=profiles)
+
+# Use the sns.lineplot() function to create line plots of the total_paid_amount over time
+sns.lineplot(x='creation_date', y='total_paid_amount', data=profiles)
+
+# Get a summary of the numerical columns in the trans and profiles tables
+trans.describe()
+
+# Get a summary of the numerical columns in the trans and profiles tables
+profiles.describe()
+
+# Use the sns.scatterplot() function to create scatter plots of the net amount and customer fees amount
+sns.scatterplot(x='NET_AMOUNT', y='CUSTOMER_FEES_AMOUNT', data=trans);
+
+# Use the sns.barplot() function to create bar plots of the net amount and customer fees amount, grouped by SERVICE_CATEGORY
+plt.figure(figsize=(16, 8))  # Set the figure size to 8x8 inches
+sns.barplot(x='SERVICE_CATEGORY', y='NET_AMOUNT', data=trans);
+sns.barplot(x='SERVICE_CATEGORY', y='CUSTOMER_FEES_AMOUNT', data=trans);
+
+# Use the sns.histplot() function to create histograms of the net amount, customer fees amount, and days_to_payment columns
+sns.histplot(trans['NET_AMOUNT'])
+sns.histplot(trans['CUSTOMER_FEES_AMOUNT'])
+sns.histplot(trans['days_to_payment'])
+
+# Use the sns.pairplot() function to create scatter plots and histograms of all the numerical columns in the profiles table
+plt.figure(figsize=(8, 8))  # Set the figure size to 8x8 inches
+sns.pairplot(trans, kind='scatter');
+
+# Use the sns.jointplot() function to create scatter plots and histograms of the total_paid_amount and customer_age columns
+sns.jointplot(x='customer_age', y='total_paid_amount', kind='scatter', data=profiles);
+
+trans.head(1)
+
+profiles.head(1)
+
+trans.info()
+profiles.info()
+
+trans.describe()
+
+profiles.describe()
+
+profiles[['total_number_of_transactions','total_paid_amount']].hist(figsize=(12,2));
+
+profiles.customer_gender.value_counts().plot(kind='pie')
+
+trans.SERVICE_CATEGORY.value_counts().plot(kind='barh',figsize=(12,3));
+
+#DATA PREPROCESSING
+1- DATA CLEANING
+#Removing Duplicates
+
+trans.drop_duplicates(inplace=True)
+trans.shape
+
+profiles.drop_duplicates(inplace=True)
+profiles.shape
+
+#Handling Incorrect Records
+
+trans['CUSTOMER_FEES_AMOUNT'] = trans['CUSTOMER_FEES_AMOUNT'].abs()
+trans['NET_AMOUNT'] = trans['NET_AMOUNT'].abs()
+
+trans.describe()
+
+#Dealling With Null Values
+
+profiles.isnull().sum()
+
+profiles = profiles[profiles['customer_gender'].notna()]
+
+profiles.isnull().sum()
+
+#2- DATA WRANGLING
+#Correcting datatypes for customers
+
+profiles['last_payment_date'] = pd.to_datetime(profiles['last_payment_date'])
+profiles['customer_birth_date'] = pd.DatetimeIndex(profiles['customer_birth_date']).year
+profiles['registeration_date'] = pd.to_datetime(profiles['registeration_date'])
+
+#Converting categorical column value into boolean 1 for M and 0 for F
+
+profiles.customer_gender[profiles.customer_gender == 'M'] = 1
+profiles.customer_gender[profiles.customer_gender == 'F'] = 0
+
+#Generate new columns for Customers Table
+
+# calculating the date of today
+s_date = datetime.today().strftime('%d-%m-%Y')
+today = datetime.strptime(s_date, '%d-%m-%Y')
+
+profiles['Recency'] = today - profiles['last_payment_date'] #number of days since the last payment
+profiles['Age'] = today.year - profiles['customer_birth_date']   #customer Age
+profiles['days_since_registration'] = today - profiles['registeration_date'] #number of days since he registered
+profiles['average_trans'] =( profiles['days_since_registration'] - profiles['Recency'])/ profiles['total_number_of_transactions']#average days for each transaction
+profiles['average_amount'] = (profiles['total_paid_amount']/profiles['total_number_of_transactions']) #average amount of each transaction
+
+profiles.describe()
+
+profiles.isnull().sum()
+
+#Replace age null values with the median for customers attributes
+
+profiles['Age'] = profiles['Age'].fillna(profiles['Age'].median()) #setting age null values with the median value
+profiles['Age'] = profiles['Age'].astype(int) #convert it's datatype to integer
+profiles['Average_Amount'] = profiles['average_amount'].apply(np.floor) # selecting the floor amount and neglecting the decimacls 
+profiles['Average_Transactions'] = profiles['average_trans'].dt.round("D") # rounding the number to the days 
+
+profiles.head(1)
+
+#Renaming customer columns
+
+profiles = profiles.rename(columns={'total_number_of_transactions': 'Frequency', 
+                                    'total_paid_amount': 'Monetary',
+                                   'customer_gender':'Gender',
+                                    'days_since_registration':'Customer_For'
+                                   })
+
+profiles.head(1)
+
+#Selecting the needed columns from customer Table
+
+Customers = profiles[['ID','Gender','Monetary','Frequency','Recency','Age','Customer_For','Average_Transactions','Average_Amount']]
+
+Customers.head(1)
+
+#changing the datatypes of Rec/ency, Customer_For, and Average_Transactions to integers
+
+Customers['Recency']=Customers.Recency.dt.days
+Customers['Customer_For']=Customers.Customer_For.dt.days
+Customers['Average_Transactions']=Customers.Average_Transactions.dt.days
+
+trans.head()
+
+#Correcting datatypes for Transactions table
+
+trans['PAYMENT_DAY'] = pd.to_datetime(trans['PAYMENT_DAY'])
+
+#Generate new columns for Transactions table
+
+trans['Year'] = trans['PAYMENT_DAY'].dt.year    #new column for the year of the transaction
+trans['Month'] = trans['PAYMENT_DAY'].dt.month  #new column for the Month of the transaction
+
+#Renaming Transactions columns
+
+trans = trans.rename(columns={'SERVICE_CATEGORY': 'Category', 
+                                    'BILLER_NAME': 'Biller',
+                                   'BILL_TYPE_NAME':'Service',
+                                    'CUSTOMER_ID':'ID'
+                                   })
+
+trans.head(1)
+
+#Selecting the need Transactional columns
+
+Transactions = trans[['ID','Service','Biller','Category','Year','Month']]
+
+Transactions.head(1)
+
+#RFM Analysis
+#Ranking customers based on their R, F, and M score
+
+Customers['R_rank'] = Customers['Recency'].rank(ascending=False)
+Customers['F_rank'] = Customers['Frequency'].rank(ascending=True)
+Customers['M_rank'] = Customers['Monetary'].rank(ascending=True)
+
+# Normalizing the rank of the customers
+Customers['R_rank_norm'] = (Customers['R_rank']/Customers['R_rank'].max())*100
+Customers['F_rank_norm'] = (Customers['F_rank']/Customers['F_rank'].max())*100
+Customers['M_rank_norm'] = (Customers['F_rank']/Customers['M_rank'].max())*100
+
+#Droping non-normalized columns
+Customers.drop(columns=['R_rank', 'F_rank', 'M_rank'], inplace=True)
+
+#Calculating the overall RFM Score.
+#Weights can be applied equally or we can provide specific weights for each parameter based on domain knowledge or business inputs. Here in the above case, we are giving more importance to Frequency and Monitory.
+
+#Assigning weights to R, F, and M, 0.15, 0.57, 0.05 respectively
+Customers['RFM_Score'] = 0.15*Customers['R_rank_norm']+0.28 * \
+Customers['F_rank_norm']+0.57*Customers['M_rank_norm']
+Customers['RFM_Score'] *= 0.05
+#Rounding the score to the second decimal
+Customers = Customers.round(2)
+#Dropping R, F, and M columns
+Customers.drop(columns=['R_rank_norm', 'F_rank_norm', 'M_rank_norm'], inplace=True)
+#show the first row
+Customers[['ID', 'RFM_Score']].head(1)
+
+Customers.RFM_Score.hist()
+plt.xlabel('RFM Score')
+plt.ylabel('Number of Customers')
+plt.show()
+
+#Categorizing customers into 3 groups based on their scores
+
+Customers["Customer_segment"] = np.where(Customers['RFM_Score'] >  3.33,"Top Customers",
+                                        (np.where(Customers['RFM_Score'] > 1.66, "Medium value Customer",'Low Value Customers')))
+Customers[['ID', 'RFM_Score', 'Customer_segment']].head(5)
+
+#Categorizing customers into 3 groups based on their scores
+
+#Customers["Customer_segment"] = np.where(Customers['RFM_Score'] > 4.5,"Top Customers", (np.where(Customers['RFM_Score'] > 4, "High value Customer", (np.where(Customers['RFM_Score'] > 3,"Medium Value Customer", np.where(Customers['RFM_Score'] > 1.6,'Low Value Customers', 'Lost Customers')))))) Customers[['ID', 'RFM_Score', 'Customer_segment']].head(5)
+#Plotting the generated Segments
+
+Customers.Customer_segment.value_counts().plot(kind ='barh');
+plt.xlabel('Number of customers')
+
+Customers.head()
+
+Customers.head()
+Customers.set_index('ID', inplace = True)
+
+Customers.head()
+
+#K-Prototype clustering
+
+Customers.head(1)
+
+#Selecting the variables we want for our cluster and assigning it to a "Cluster_df" dataframe
+
+cluster_columns = ['Gender','Monetary', 'Frequency', 'Recency', 'Age', 'Customer_For','Average_Transactions','Average_Amount']
+Clusters_df = Customers[cluster_columns]
+
+#Clusters_df.head(1)
+
+#Dividing our dataframe into numerical and categorical datafarame
+
+# define numerical and categorical columns
+numerical_columns = ['Monetary', 'Frequency', 'Recency', 'Age', 'Customer_For','Average_Transactions','Average_Amount']
+categorical_columns = ['Gender']
+
+#Standardizing our data
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+
+# create a copy of our data to be scaled
+Clusters_df_scale = Clusters_df.copy()
+
+# standard scale numerical features
+for c in numerical_columns:
+    Clusters_df_scale[c] = scaler.fit_transform(Clusters_df_scale[[c]])
+
+Clusters_df_scale.head()
+
+Clusters_df_scale.Gender.value_counts()
+
+Clusters_df_scale.shape
+
+#Removing outliers
+
+Clusters_df_scale = Clusters_df_scale[(Clusters_df_scale['Monetary'].abs()<=3) & (Clusters_df_scale['Frequency'].abs()<=3) & (Clusters_df_scale['Recency'].abs()<=3)& (Clusters_df_scale['Age'].abs()<=3)& (Clusters_df_scale['Customer_For'].abs()<=3)& (Clusters_df_scale['Average_Transactions'].abs()<=3)& (Clusters_df_scale['Average_Amount'].abs()<=3)]
+Clusters_df_scale.shape
+
+Clusters_df_scale.Gender.value_counts()
+
+#This algorithm requires the index position of our categorical variables
+
+from kmodes.kprototypes import KPrototypes
+categorical_indexes = []
+for c in categorical_columns:
+    categorical_indexes.append(Clusters_df.columns.get_loc(c)) 
+categorical_indexes
+
+#Deciding the numbers of clusters using Elbow method
+
+import seaborn as sns
+from kmodes.kprototypes import KPrototypes
+
+num_clusters = list(range(2, 11))
+
+cost_values = []
+
+# calculate cost values for each number of clusters (2 to 10)
+for k in num_clusters:
+    kproto = KPrototypes(n_clusters=k, init='Huang', random_state=42)
+    kproto.fit_predict(Clusters_df_scale, categorical= categorical_indexes)
+    cost_values.append(kproto.cost_)
+
+# plot cost against number of clusters
+ax = sns.lineplot(num_clusters, y=cost_values, marker="o");
+ax.set_title('Elbow curve', fontsize=14);
+ax.set_xlabel('No of clusters', fontsize=11);
+ax.set_ylabel('Cost', fontsize=11);
+
+#Trying again using silhouette score method
+
+#from sklearn.metrics import silhouette_score
+
+silhouette_avg = []
+
+# calculate average silhouette score for each number of cluster (2 to 10)
+for k in num_clusters:
+    kproto = KPrototypes(n_clusters=k, init='Huang', random_state=42)
+    kproto.fit_predict(Clusters_df_scale, categorical= categorical_indexes)
+    cluster_labels = kproto.labels_
+    silhouette_avg.append(silhouette_score(Clusters_df_scale, cluster_labels))
+
+# plot average silhouette score against number of clusters
+ax = sns.lineplot(x=num_clusters, y=silhouette_avg, marker="o");
+ax.set_title('Average Silhouette', fontsize=14);
+ax.set_xlabel('No of clusters', fontsize=11);
+ax.set_ylabel('score', fontsize=11);
+
+#Clustering our Customers into 3 groups
+
+kproto = KPrototypes(n_clusters= 3, init='Huang', n_init = 25, random_state=42)
+kproto.fit_predict(Clusters_df_scale, categorical= categorical_indexes)
+
+# store cluster labels
+cluster_labels = kproto.labels_
+
+# add clusters to dataframe
+Clusters_df_scale["KPCluster"] = cluster_labels
+Clusters_df_scale
+
+#Clusters_df_scale["KPCluster"].value_counts() #count of each cluster
+
+# numerical data exploration
+g = sns.PairGrid(Clusters_df_scale[['Gender','Monetary', 'Frequency', 'Recency', 'Age', 'Customer_For','Average_Transactions','Average_Amount','KPCluster']], hue = "KPCluster", palette = 'Spectral')
+g.map_diag(sns.histplot)
+g.map_offdiag(sns.scatterplot)
+g.add_legend();
+
+#Using PCA for dimensionallity reducation so we can visualize the clusters into 3D
+
+from sklearn.decomposition import PCA
+
+pca = PCA(n_components=3)
+pca_df = pca.fit_transform(Clusters_df_scale)
+
+import plotly.graph_objects as go
+
+fig = go.Figure(
+    go.Scatter3d(mode='markers',
+                 x = pca_df[:, 0],
+                 y = pca_df[:, 1],
+                 z = pca_df[:, 2],
+                 marker=dict(size = 5, color = Clusters_df_scale['KPCluster'], colorscale = 'spectral')
+                )
+)
+    
+fig.show()
+
+ax = sns.countplot(data = Clusters_df_scale, x="Gender", hue = "KPCluster", palette = 'Spectral' )
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+#K-Means Clustering
+#Select the needed columns
+
+cluster_columns = ['Monetary', 'Frequency', 'Recency', 'Age', 'Customer_For','Average_Transactions','Average_Amount']
+K_df = Customers[cluster_columns]
+
+#Standardize the data
+
+from sklearn.cluster import KMeans
+from sklearn import preprocessing
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+
+K_df_scale = K_df.copy()
+
+# standard scale numerical features
+for c in cluster_columns:
+    K_df_scale[c] = scaler.fit_transform(K_df_scale[[c]])
+K_df_scale
+
+#Removing outliers
+
+K_df_scale = K_df_scale[(K_df_scale['Monetary'].abs()<=3) & (K_df_scale['Frequency'].abs()<=3) & (K_df_scale['Recency'].abs()<=3)& (K_df_scale['Age'].abs()<=3)& (K_df_scale['Customer_For'].abs()<=3)& (K_df_scale['Average_Transactions'].abs()<=3)& (K_df_scale['Average_Amount'].abs()<=3)]
+K_df_scale.shape
+
+K_df_scale.head()
+
+#Determining the number of k using Elblow and Silhouette method
+
+inertia = []
+K = range(1,12)
+for k in K:
+    kmeanModel = KMeans(n_clusters=k).fit(K_df_scale)
+    kmeanModel.fit(K_df_scale)
+    inertia.append(kmeanModel.inertia_)
+    
+# Plot the elbow
+plt.figure(figsize=(10,8))
+plt.plot(K, inertia, 'bx-',marker = 'o',linestyle= '--')
+plt.xlabel('number of K')
+plt.ylabel('Inertia')
+plt.show();
+
+silhouette = []
+for n in range(2,13):
+  model = KMeans(n_clusters = n, random_state=0).fit(K_df_scale)
+  y_kmeans_pred = model.predict(K_df_scale)
+  score = silhouette_score(K_df_scale, y_kmeans_pred)
+  silhouette.append(score)
+    
+# Plotting elbow method
+plt.figure(figsize=(10,8))
+plt.xlabel('number of clusters')
+plt.ylabel('Silhouette score')
+plt.plot(range(2,13),silhouette,marker = 'o',linestyle= '--');
+
+selecting kmean of value 3
+
+kmeans = KMeans(n_clusters=3,n_init = 25, random_state=42).fit(K_df_scale)
+
+K_df_scale.head()
+
+#Adding cluster column to the table
+
+K_df_scale.loc[:,"KMCluster"] = kmeans.labels_
+Clusters_df_scale.loc[:,"KMCluster"] = kmeans.labels_
+
+#Visualizing the output data
+
+K_df_scale.KMCluster.value_counts()
+
+ 
+
+sns.pairplot(K_df_scale,hue='KMCluster',palette = 'Spectral');
+
+# Perform PCA on the data to reduce to 3 dimensions
+from sklearn.decomposition import PCA
+pca = PCA(n_components=3)
+pca_result = pca.fit_transform(K_df_scale)
+
+# Create a new dataframe with the PCA results
+K_df_pca = pd.DataFrame(columns = ['pca1','pca2','pca3'])
+K_df_pca['pca1'] = pca_result[:,0]
+K_df_pca['pca2'] = pca_result[:,1]
+K_df_pca['pca3'] = pca_result[:,2]
+K_df_pca['KMCluster'] = K_df_scale['KMCluster']
+
+# Visualize the results in 3D using plotly express
+import plotly.express as px
+fig = px.scatter_3d(K_df_pca, x='pca1', y='pca2', z='pca3', color='KMCluster')
+fig.show()
+
+# Merging Tables
+
+Clustering_Transactions = pd.merge(Transactions, Clusters_df_scale[['KMCluster','KPCluster']], on='ID')
+Clustering_Transactions = pd.merge(Clustering_Transactions, Customers[['Customer_segment']], on='ID')
+Clustering_Transactions.head()
+
+#Make a list that includes all the Telecommunication services and name it Telecommunication_Services
+
+# Select only the rows where the value in the 'Customer_segment' column is 'Top Customers'
+top_customers = Transactions[Transactions['Category'].isin(['Telecom','Top-Up'])]
+
+#Telecommunication_services=top_customers['Service'].unique().tolist()
+
+#Creating a list of all clusters we have:
+conditions = [    ('KMCluster 0', Clustering_Transactions['KMCluster'] == 0),
+    ('KMCluster 1', Clustering_Transactions['KMCluster'] == 1),
+    ('KMCluster 2', Clustering_Transactions['KMCluster'] == 2),
+    ('KPCluster 0', Clustering_Transactions['KPCluster'] == 0),
+    ('KPCluster 1', Clustering_Transactions['KPCluster'] == 1),
+    ('KPCluster 2', Clustering_Transactions['KPCluster'] == 2),
+    ('Top Customer', Clustering_Transactions['Customer_segment'] == 'Top Customers'),
+    ('Medium value Customer', Clustering_Transactions['Customer_segment'] == 'Medium value Customer'),
+    ('Low Value Customers', Clustering_Transactions['Customer_segment'] == 'Low Value Customers')
+]
+
+#Association
+1- APRIORI
+Here i will iterate through the groups of each one of the three segmenting methods
+
+df = Clustering_Transactions.copy()
+
+#Grouping Year, Month, and Customer_ID, aggregating bill types into a list
+agg_df = (df.groupby(['Year','Month','ID'])
+      .agg({'Service': lambda x: x.tolist()})
+      .reset_index())   
+agg_df
+
+transactions = agg_df.Service #the list of items for each customer in each month
+
+#Applying Apriori algorithm
+from apyori import apriori 
+rules = list(apriori(
+    transactions, 
+    min_support=0.01, 
+    min_confidence=0.10,
+    min_length=2,
+    max_length=2))
+
+# Prints one rule
+print(rules[0])
+
+#Converting Rules into Readable Format
+#1-add a From and To field to the DataFrame, to indicate a rule's antecedent and consequent respectively. Hence for a rule of the form A->B.
+#The From will contain A and To will contain B.
+#Support, Confidence and Liftalso will be added corresponding to each rule in the DataFrame.
+
+rules_df = pd.DataFrame(
+    [{'From': list(rule[0])[0],
+    'To': list(rule[0])[1],
+    'Support': rule[1],
+    'Confidence': rule[2][0][2],
+    'Lift': rule[2][0][3]} for rule in rules if len(rule[0]) == 2])
+rules_df = rules_df.dropna()
+
+#making sure that 'From Column' includes all telecommunications and "To" Column doesn't
+rules_df = rules_df.loc[(rules_df['From'].isin(Telecommunication_services)) & ~(rules_df['To'].isin(Telecommunication_services))]
+
+
+rules_df.head()
+
+#List Rules with N's
+#The code below calls plot() on each row of the rules DataFrame to create a list of all the mined rules. First, we have to add two numeric columns corresponding to each item to rules_df.
+#The 'FromN' and 'ToN' columns are added to the DataFrame, containing the mapped numbers for the 'From' and 'To' columns, respectively
+
+# List of all items
+#items = set(rules_df['From']) | set(rules_df['To'])
+
+# Creates a mapping of items to numbers
+#imap = {item : i for i, item in enumerate(items)}
+
+# Maps the items to numbers and adds the numeric 'FromN' and 'ToN' columns
+#rules_df['FromN'] = rules_df['From'].map(imap)
+#rules_df['ToN'] = rules_df['To'].map(imap)
+
+# Displays the top 20 association rules, sorted by Support
+rules_df.sort_values('Support', ascending=False).head(20)
+
+rules_df[['Support', 'Confidence','Lift']].mean()
+
+#Plotting the Rules
+
+# List of all items
+items = set(rules_df['From']) | set(rules_df['To'])
+
+# Creates a mapping of items to numbers
+imap = {item : i for i, item in enumerate(items)}
+
+# Maps the items to numbers and adds the numeric 'FromN' and 'ToN' columns
+rules_df['FromN'] = rules_df['From'].map(imap)
+rules_df['ToN'] = rules_df['To'].map(imap)
+
+# Pick top rules
+
+rules_df = rules_df.sort_values('Support', ascending=False).head(50)
+
+# Adds ticks to the top of the graph also
+plt.rcParams['xtick.top'] = plt.rcParams['xtick.labeltop'] = True
+
+# Sets the size of the plot
+fig = plt.figure(figsize=(15, 7))
+
+# Draws a line between items for each rule
+# Colors each line according to the support of the rule
+for index, row in rules_df.head(20).iterrows():
+    plt.plot([row['FromN'], row['ToN']], [0, 1], 'o-',
+             c=plt.cm.viridis(row['Support'] * 30),
+             markersize=10,
+             lw=row['Confidence'] * 10)
+
+# Adds a colorbar and its title  
+cb = plt.colorbar(plt.cm.ScalarMappable(cmap='viridis'))
+cb.set_label('Support * 10')
+
+# Adds labels to xticks and removes yticks
+plt.xticks(range(len(items)), items, rotation='vertical')
+plt.yticks([])
+plt.show()
+
+# List of conditions to iterate over
+# Iterate over the conditions
+for label, condition in conditions:
+    # Filter the dataframe based on the condition
+    df = Clustering_Transactions[condition]
+    
+    # Group the data by year, month, and customer ID and aggregate the services into a list
+    agg_df = (df.groupby(['Year','Month','ID'])
+          .agg({'Service': lambda x: x.tolist()})
+          .reset_index())  
+
+    transactions = agg_df.Service #the list of items for each customer in each month
+
+    rules = list(apriori(
+    transactions, 
+    min_support=0.001, 
+    min_confidence=0.10,
+    min_length=2,
+    max_length=2))
+
+    # Create a dataframe with the rules
+    rules_df = pd.DataFrame(
+    [{'From': list(rule[0])[0],
+    'To': list(rule[0])[1],
+    'Support': rule[1],
+    'Confidence': rule[2][0][2],
+    'Lift': rule[2][0][3]} for rule in rules if len(rule[0]) == 2])
+    rules_df = rules_df.dropna()
+
+    # Filter the dataframe to only include associations between telecommunications services and non-telecommunications services
+    #Add this try and except so if there's any rules do not crash 
+    try:
+        rules_df = rules_df.loc[(rules_df['From'].isin(Telecommunication_services)) & ~(rules_df['To'].isin(Telecommunication_services))]
+    except KeyError:
+        print("No rules found for this condition")
+
+    # Calculate the mean values of support, confidence, and lift
+    Evaluation = rules_df[['Support', 'Confidence','Lift']].mean()
+
+    # Print the condition and the mean evaluation metrics
+    print("At", label)
+    print(Evaluation,'\n')
+
+#2-ECLAT
+#Transposing the services into columns
+
+# Import the ECLAT algorithm from pyECLAT library
+from pyECLAT import ECLAT
+
+# Load a copy of the transaction data into a pandas dataframe
+df = Clustering_Transactions.copy()
+
+
+# Group the data by customer ID and aggregate the services into a list
+agg_df = (df.groupby(['Year','Month','ID'])
+      .agg({'Service': lambda x: x.tolist()})
+      .reset_index())
+
+
+li = agg_df.Service.to_list()
+eclat_df = pd.DataFrame(li)
+eclat_df.head(1)
+
+#Applying Eclat algorithm
+
+# Initialize the ECLAT algorithm
+eclat_instance = ECLAT(data=eclat_df, verbose=True)
+
+# Run the ECLAT algorithm
+_, supports = eclat_instance.fit(
+min_support=0.01,
+min_combination=2,
+max_combination=2,
+separator=' & ',
+verbose=True)
+
+#Displaying the results
+
+# Initialize an empty dataframe for the association rules
+rules_df = pd.DataFrame(columns=['From', 'To', 'Support', 'Confidence', 'Lift'])
+
+# Iterate through the supports
+for rule, support in supports.items():
+  from_, to = rule.split(' & ')
+  
+  # Define total_count, from_count, and to_count
+  total_count = agg_df[agg_df['Service'].apply(lambda x: from_ in x)].shape[0]
+  from_count = agg_df[agg_df['Service'].apply(lambda x: from_ in x and to in x)].shape[0]
+  to_count = agg_df[agg_df['Service'].apply(lambda x: to in x)].shape[0]
+  
+  # Calculate confidence and lift
+  confidence = from_count / total_count
+  lift = confidence / (to_count / agg_df.shape[0])
+  
+  # Append a new row to the rules dataframe
+  rules_df = rules_df.append({
+      'From': from_,
+      'To': to,
+      'Support': support,
+      'Confidence': confidence,
+      'Lift': lift
+  }, ignore_index=True)
+
+#Filter the Telecommunication services 
+rules_df = rules_df[rules_df['From'].isin(Telecommunication_services) & ~rules_df['To'].isin(Telecommunication_services)]
+
+# Display the top 10 association rules, sorted by support
+rules_df.sort_values(by='Support', ascending=False).head(10)
+
+#Displaying the overall performance of the model using mean
+
+rules_df[['Support', 'Confidence','Lift']].mean()
+
+Visualizing the results
+
+# Create a mapping of items to numbers
+items = set(rules_df['From'].tolist() + rules_df['To'].tolist())
+imap = {item : i for i, item in enumerate(items)}
+
+# Map the items to numbers and add the numeric 'FromN' and 'ToN' columns
+rules_df['FromN'] = rules_df['From'].map(imap)
+rules_df['ToN'] = rules_df['To'].map(imap)
+
+# Add ticks to the top of the graph
+plt.rcParams['xtick.top'] = plt.rcParams['xtick.labeltop'] = True
+
+# Display the top 50 association rules, sorted by support
+rules_df = rules_df.sort_values(by='Support', ascending=False).head(50)
+
+# Set the size of the plot
+fig = plt.figure(figsize=(15, 7))
+
+# Draw a line between items for each rule
+# Color each line according to the support of the rule
+for index, row in rules_df.iterrows():
+    plt.plot([row['FromN'], row['ToN']], [0, 1], 'o-',
+             c=plt.cm.viridis(row['Support'] * 40),
+             markersize=20, lw=row['Confidence'] * 40 )
+
+# Adds a colorbar and its title  
+cb = plt.colorbar(plt.cm.ScalarMappable(cmap='viridis'))
+cb.set_label('Support * 40')
+
+# Adds labels to xticks and removes yticks
+plt.xticks(range(len(items)), items, rotation='vertical')
+plt.yticks([])
+plt.show()
+
+for label, condition in conditions:
+    # Filter the dataframe based on the condition
+    df = Clustering_Transactions[condition]
+    # Import the ECLAT algorithm from pyECLAT library
+
+
+    # Group the data by customer ID and aggregate the services into a list
+    agg_df = (df.groupby(['Year','Month','ID'])
+          .agg({'Service': lambda x: x.tolist()})
+          .reset_index())
+
+    li = agg_df.Service.to_list()
+    eclat_df = pd.DataFrame(li)
+
+
+
+    # Initialize the ECLAT algorithm
+    eclat_instance = ECLAT(data=eclat_df, verbose=True)
+
+    # Run the ECLAT algorithm
+    _, supports = eclat_instance.fit(
+    min_support=0.01,
+    min_combination=2,
+    max_combination=2,
+    separator=' & ',
+    verbose=True)
+
+    # Initialize an empty dataframe for the association rules
+    rules_df = pd.DataFrame(columns=['From', 'To', 'Support', 'Confidence', 'Lift'])
+
+    # Iterate through the supports
+    for rule, support in supports.items():
+      from_, to = rule.split(' & ')
+
+      # Define total_count, from_count, and to_count
+      total_count = agg_df[agg_df['Service'].apply(lambda x: from_ in x)].shape[0]
+      from_count = agg_df[agg_df['Service'].apply(lambda x: from_ in x and to in x)].shape[0]
+      to_count = agg_df[agg_df['Service'].apply(lambda x: to in x)].shape[0]
+
+      # Calculate confidence and lift
+      confidence = from_count / total_count
+      lift = confidence / (to_count / agg_df.shape[0])
+
+      # Append a new row to the rules dataframe
+      rules_df = rules_df.append({
+          'From': from_,
+          'To': to,
+          'Support': support,
+          'Confidence': confidence,
+          'Lift': lift
+      }, ignore_index=True)
+
+    rules_df = rules_df[rules_df['From'].isin(Telecommunication_services) & ~rules_df['To'].isin(Telecommunication_services)]
+
+    Evaluation = rules_df[['Support','Confidence','Lift']].mean()
+    # Print the condition and the mean evaluation metrics
+    print("At", label)
+    print(Evaluation,'\n')
+
+ 
+
+#3- FP-GROWTH'
+#Applying algorithm
+
+# Import the required modules
+from mlxtend.preprocessing import TransactionEncoder
+from mlxtend.frequent_patterns import fpgrowth, association_rules
+
+# Create a copy of Clustering_Transactions dataframe
+df = Clustering_Transactions.copy()
+
+# Aggregate the transactions by Year, Month, and ID
+agg_df = (df.groupby(['Year','Month','ID'])
+      .agg({'Service': lambda x: x.tolist()})
+      .reset_index())
+
+# Add all the services into a list
+transactions = agg_df.Service.to_list()
+
+# Encoding the services
+te = TransactionEncoder() 
+te_ary = te.fit(transactions).transform(transactions)
+df = pd.DataFrame(te_ary, columns=te.columns_)
+df.head()
+
+#Displaying the scores
+
+# Find the frequent itemsets with a minimum support of 0.01
+frequent_itemsets = fpgrowth(df, min_support=0.01, use_colnames=True, max_len=2, verbose=False)
+
+# Calculate the association rules with a minimum support of 0.01
+rules = association_rules(frequent_itemsets, metric='support', min_threshold=0.01)
+
+# Calculate the confidence and lift values for each rule
+rules['Confidence'] = rules['support'] / rules['antecedent support']
+rules['Lift'] = rules['Confidence'] / rules['consequent support']
+rules['N'] = (rules['support'] * len(transactions)).astype(int)
+
+#Renaming the antecedents and consequents to be 'To' and 'From'
+rules['From'] = pd.DataFrame(list(rules['antecedents']))
+rules['To'] = pd.DataFrame(list(rules['consequents']))
+
+# Filter the rules dataframe to include only rules where 'antecedents' is in the Telecommunication_services list
+# and 'consequents' is not in the Telecommunication_services list
+rules = rules[rules['From'].isin(Telecommunication_services) & ~rules['To'].isin(Telecommunication_services)]
+
+# Display the top 20 rules, sorted by lift
+rules[['From','To','support','Confidence','Lift']].sort_values('support', ascending=False).head(10)
+
+Sorting the values
+
+# Pick top rules
+rules_df = rules_df.sort_values('N', ascending=False).head(50)
+
+# List of all items
+items = set(rules_df['From']) | set(rules_df['To'])
+
+# Creates a mapping of items to numbers
+imap = {item : i for i, item in enumerate(items)}
+
+# Maps the items to numbers and adds the numeric 'FromN' and 'ToN' columns
+rules_df['FromN'] = rules_df['From'].map(imap)
+rules_df['ToN'] = rules_df['To'].map(imap)
+
+# Displays the top 20 association rules, sorted by Support
+rules_df.sort_values('support', ascending=False).head(5)
+
+# Import the required modules
+from mlxtend.preprocessing import TransactionEncoder
+from mlxtend.frequent_patterns import fpgrowth, association_rules
+
+# Create a copy of Clustering_Transactions dataframe
+df = Clustering_Transactions.copy()
+
+# Aggregate the transactions by ID
+agg_df = (df.groupby(['Year','Month','ID'])
+      .agg({'Service': lambda x: x.tolist()})
+      .reset_index())
+
+# Add all the services into a list
+transactions = agg_df.Service.to_list()
+
+# Encoding the services
+te = TransactionEncoder() 
+te_ary = te.fit(transactions).transform(transactions)
+df = pd.DataFrame(te_ary, columns=te.columns_)
+
+# Find the frequent itemsets with a minimum support of 0.01
+frequent_itemsets = fpgrowth(df, min_support=0.01, use_colnames=True, max_len=2, verbose=False)
+
+# Calculate the association rules with a minimum support of 0.01
+rules = association_rules(frequent_itemsets, metric='support', min_threshold=0.01)
+
+# Calculate the confidence and lift values for each rule
+rules['Confidence'] = rules['support'] / rules['antecedent support']
+rules['Lift'] = rules['Confidence'] / rules['consequent support']
+rules['N'] = (rules['support'] * len(transactions)).astype(int)
+
+#Renaming the antecedents and consequents to be 'To' and 'From'
+rules['From'] = pd.DataFrame(list(rules['antecedents']))
+rules['To'] = pd.DataFrame(list(rules['consequents']))
+
+# Filter the rules dataframe to include only rules where 'antecedents' is in the Telecommunication_services list
+# and 'consequents' is not in the Telecommunication_services list
+rules = rules[rules['From'].isin(Telecommunication_services) & ~rules['To'].isin(Telecommunication_services)]
+
+# Display the top 20 rules, sorted by lift
+rules[['From','To','support','Confidence','Lift']].sort_values('support', ascending=False).head(10)
+
+rules[['support','Confidence','Lift']].mean()
+
+#Visualizing
+
+# Pick top rules
+rules = rules.sort_values('support', ascending=False).head(50)
+
+# List of all items
+items = set(rules['From']) | set(rules['To'])
+
+# Creates a mapping of items to numbers
+imap = {item : i for i, item in enumerate(items)}
+
+# Maps the items to numbers and adds the numeric 'FromN' and 'ToN' columns
+rules['FromN'] = rules['From'].map(imap)
+rules['ToN'] = rules['To'].map(imap)
+
+# Adds ticks to the top of the graph also
+plt.rcParams['xtick.top'] = plt.rcParams['xtick.labeltop'] = True
+
+# Sets the size of the plot
+fig = plt.figure(figsize=(15, 7))
+
+# Draws a line between items for each rule
+# Colors each line according to the support of the rule
+for index, row in rules.head(50).iterrows():
+    plt.plot([row['FromN'], row['ToN']], [0, 1], 'o-',
+             c=plt.cm.viridis(row['support'] * 40),
+             markersize=20,lw=row['Confidence'] * 40)
+
+# Adds a colorbar and its title  
+cb = plt.colorbar(plt.cm.ScalarMappable(cmap='viridis'))
+cb.set_label('Support*40')
+
+# Adds labels to xticks and removes yticks
+plt.xticks(range(len(items)), items, rotation='vertical')
+plt.yticks([])
+plt.show()
+
+for label, condition in conditions:
+    # Filter the dataframe based on the condition
+    df = Clustering_Transactions[condition]
+
+    # Aggregate the transactions by ID
+    agg_df = (df.groupby(['Year','Month','ID'])
+          .agg({'Service': lambda x: x.tolist()})
+          .reset_index())
+
+    # Add all the services into a list
+    transactions = agg_df.Service.to_list()
+
+    # Encoding the services
+    te = TransactionEncoder() 
+    te_ary = te.fit(transactions).transform(transactions)
+    df = pd.DataFrame(te_ary, columns=te.columns_)
+
+    # Find the frequent itemsets with a minimum support of 0.01
+    frequent_itemsets = fpgrowth(df, min_support=0.01, use_colnames=True, max_len=2, verbose=False)
+
+    # Calculate the association rules with a minimum support of 0.01
+    rules = association_rules(frequent_itemsets, metric='support', min_threshold=0.01)
+
+    # Calculate the confidence and lift values for each rule
+    rules['Confidence'] = rules['support'] / rules['antecedent support']
+    rules['Lift'] = rules['Confidence'] / rules['consequent support']
+    rules['N'] = (rules['support'] * len(transactions)).astype(int)
+
+    #Renaming the antecedents and consequents to be 'To' and 'From'
+    rules['From'] = pd.DataFrame(list(rules['antecedents']))
+    rules['To'] = pd.DataFrame(list(rules['consequents']))
+
+    #Filtering Condition
+    rules = rules[rules['From'].isin(Telecommunication_services) & ~rules['To'].isin(Telecommunication_services)]
+    Evaluation = rules[['support','Confidence','Lift']].mean()
+
+    # Print the condition and the mean evaluation metrics
+    print("At", label)
+    print(Evaluation,'\n')
+
+ 
+
+ 
+
+ 
+
